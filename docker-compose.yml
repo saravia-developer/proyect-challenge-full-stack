@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  database.dashboard.challenge:
+    image: mysql
+    restart: on-failure
+    container_name: database.dashboard.challenge
+    environment:
+      MYSQL_ROOT_PASSWORD: challenge
+      MYSQL_DATABASE: dashboard-challenge
+      MYSQL_USER: luis.saravia
+      MYSQL_PASSWORD: saravia
+    ports:
+      - "3328:3306"
+    volumes:
+      - ./db_data:/var/lib/mysql
+      - ./backups:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+    networks:
+      - challenge-full-stack
+    
+  backend:
+    image: saraviadeveloper/backend-challenge-full-stack
+    depends_on:
+      database.dashboard.challenge:
+        condition: service_healthy
+    restart: on-failure
+    ports:
+      - "3100:3000"
+    networks:
+      - challenge-full-stack
+
+  frontend:
+    image: saraviadeveloper/challenge-full-stack
+    depends_on:
+      - backend
+    restart: on-failure
+    ports:
+      - "5173:80"
+    networks: 
+      - challenge-full-stack
+
+networks:
+  challenge-full-stack:
+    name: "challenge-full-stack"
+    driver: bridge
